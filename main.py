@@ -23,12 +23,15 @@ def send_message(text, reply_markup=None):
     payload = {"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"}
     if reply_markup:
         payload["reply_markup"] = reply_markup
-    r = requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload)
-    print("TELEGRAM RESPONSE:", r.text)
+    requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload)
 
 def answer_callback(callback_id, text=""):
     requests.post(f"{TELEGRAM_URL}/answerCallbackQuery",
                   json={"callback_query_id": callback_id, "text": text})
+
+def delete_message(message_id):
+    requests.post(f"{TELEGRAM_URL}/deleteMessage",
+                  json={"chat_id": CHAT_ID, "message_id": message_id})
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -49,8 +52,8 @@ def webhook():
         )
         markup = {
             "inline_keyboard": [[
-                {"text": "✅ Continue", "callback_data": f"continue|{symbol}"},
-                {"text": "❌ End",      "callback_data": f"end|{symbol}"}
+                {"text": "✅ Continue", "callback_data": f"continue|{symbol}|{direction}"},
+                {"text": "❌ End",      "callback_data": f"end|{symbol}|{direction}"}
             ]]
         }
         send_message(msg, reply_markup=markup)
@@ -66,16 +69,31 @@ def bot():
         callback = data.get("callback_query")
         if callback:
             cb_id   = callback["id"]
-            cb_data = callback.get("data", "")
-            action, symbol = cb_data.split("|", 1)
+            cb_data           = callback.get("data", "")
+            action, symbol, direction = cb_data.split("|", 2)
+            msg_id            = callback["message"]["message_id"]
+            emoji             = "🟢" if direction == "LONG" else "🔴"
+            chart_link        = f"https://www.tradingview.com/chart/?symbol={symbol}"
 
             if action == "end":
                 ended[symbol] = today()
                 answer_callback(cb_id, "Ended.")
-                send_message(f"🛑 No more alerts for {symbol} today.")
+                delete_message(msg_id)
             elif action == "continue":
                 answer_callback(cb_id, "Watching for next tap.")
-                send_message(f"👀 Watching for next {symbol} tap.")
+                delete_message(msg_id)
+                markup = {
+                    "inline_keyboard": [[
+                        {"text": "✅ Continue", "callback_data": f"continue|{symbol}|{direction}"},
+                        {"text": "❌ End",      "callback_data": f"end|{symbol}|{direction}"}
+                    ]]
+                }
+                send_message(
+                    f"{emoji} <b>GTR {direction}</b>\n\n"
+                    f"Pair: {symbol}\n"
+                    f"Link: {chart_link}",
+                    reply_markup=markup
+                )
     except Exception:
         pass
     return "ok", 200
