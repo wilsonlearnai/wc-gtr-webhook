@@ -23,7 +23,8 @@ def send_message(text, reply_markup=None):
     payload = {"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"}
     if reply_markup:
         payload["reply_markup"] = reply_markup
-    requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload)
+    r = requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload)
+    print("TELEGRAM RESPONSE:", r.text)
 
 def answer_callback(callback_id, text=""):
     requests.post(f"{TELEGRAM_URL}/answerCallbackQuery",
