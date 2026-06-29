@@ -22,11 +22,11 @@ def webhook():
         price     = data.get("price", "")
 
         emoji = "🟢" if direction == "LONG" else "🔴"
+        chart_link = f"https://www.tradingview.com/chart/?symbol={symbol}"
         msg = (
-            f"{emoji} <b>{direction} — {symbol}</b>\n"
-            f"━━━━━━━━━━━━━━━━\n"
-            f"📍 Pivot : {pivot}\n"
-            f"💹 Price  : {price}"
+            f"{emoji} <b>GTR {direction}</b>\n\n"
+            f"Pair: {symbol}\n"
+            f"Link: {chart_link}"
         )
         send_telegram(msg)
     except Exception as e:
