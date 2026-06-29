@@ -22,7 +22,7 @@ def is_ended(symbol):
 def send_message(text, reply_markup=None):
     payload = {"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"}
     if reply_markup:
-        payload["reply_markup"] = json.dumps(reply_markup)
+        payload["reply_markup"] = reply_markup
     requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload)
 
 def answer_callback(callback_id, text=""):
